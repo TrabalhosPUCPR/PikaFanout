@@ -4,13 +4,14 @@ from sys import argv
 verbose = True
 
 
-class InvalidSyntax(Exception):
-    def __init__(self):
-        self.message = "Sintaxe invalida"
+class Error(Exception):
+    def __init__(self, m="Sintaxe invalida"):
+        self.message = m
 
 
 def validate(sev):
     msg = ""
+    print(sev)
     if sev == "DEBUG" or \
             sev == "WARNING" or \
             sev == "INFO" or \
@@ -18,38 +19,40 @@ def validate(sev):
             sev == "CRITICAL":
         return msg
     else:
-        raise InvalidSyntax()
+        raise Error("Severidade incorreta")
 
 
 def callback(channel, method, properties, body):
     msg = body.decode('utf-8')
     s = msg.split(":")
     try:
-        if not log(s[0], s[1], s[2], s[3]):
-            verbos(s[0], s[1])
+        if not log(s):
+            verbos(s)
+    except Error as e:
+        print(e.message)
     except:
         print("Sintaxe invalida")
 
 
-def log(t, s, i, m):
+def log(s):
     global verbose
     if len(s) == 4:
         if verbose:
-            validate(s)
-            print(f"[{s}] {t}|pid:{i}: {m}")
+            validate(s[1])
+            print(f"[{s[1]}] {s[0]}|pid:{s[2]}: {s[3]}")
         return True
     return False
 
 
-def verbos(attr, d):
+def verbos(s):
     global verbose
-    if attr == 'verbose':
-        if d == 'on':
+    if len(s) == 2 and s[0] == 'verbose':
+        if s[1] == 'on':
             verbose = True
-        elif d == 'off':
+        elif s[1] == 'off':
             verbose = False
         else:
-            raise InvalidSyntax()
+            raise Error()
         return True
     return False
 
@@ -66,7 +69,9 @@ ch.queue_bind(queue=queue_name, exchange=exchange)
 ch.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
 
 try:
+    print("Start consuming...")
     ch.start_consuming()
 finally:
+    print("Stop consuming.")
     ch.stop_consuming()
     conn.close()

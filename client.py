@@ -31,20 +31,20 @@ ch.exchange_declare(exchange=exchange, exchange_type='fanout')
 running = True
 while running:
     try:
-        msg = input("Mensagem (verbose:on/off)(end)")
+        msg = input("Mensagem (verbose:on/off)(end): ")
         if msg.startswith('verbose:'):
             toggle = msg.split(':')
             if len(toggle) != 2 and toggle[1] != 'on' and toggle[1] != 'off':
                 raise Error('Parametro incorreto')
             ch.basic_publish(exchange=exchange, routing_key='', body=msg)
-        elif msg == 'end': \
-                running = False
+        elif msg == 'end':
+            running = False
         else:
-            s = input("Digite a severidade")
+            s = input("Digite a severidade: ")
             if not s.isdigit():
                 raise Error("Digite um numero valido")
             s = as_severity(int(s))
-            b = f"{time.time()}:{os.getpid()}:{s}:{msg}"
+            b = f"{time.time()}:{s}:{os.getpid()}:{msg}"
             ch.basic_publish(exchange=exchange, routing_key="", body=b)
     except Error as e:
         print(e.message)
